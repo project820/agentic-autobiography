@@ -121,7 +121,10 @@ def build_report(state: dict[str, Any], checks: list[dict[str, Any]], git: dict[
         elapsed = int((now_utc() - parse_time(started_at)).total_seconds())
     passed_checks = all(item["returncode"] == 0 for item in checks)
     git_pushed = bool(git.get("head")) and git.get("head") == git.get("origin_main")
-    audit_passed = state.get("status") == "passed"
+    duration_seconds = int(state.get("duration_seconds", 10800) or 10800)
+    interval_seconds = int(state.get("interval_seconds", 600) or 600)
+    min_iterations = max(2, duration_seconds // interval_seconds + 1)
+    audit_passed = state.get("status") == "passed" and len(state.get("iterations", [])) >= min_iterations
     complete = audit_passed and passed_checks and git_pushed
     return {
         "complete": complete,
@@ -130,6 +133,7 @@ def build_report(state: dict[str, Any], checks: list[dict[str, Any]], git: dict[
         "audit_finished_at": state.get("finished_at"),
         "audit_elapsed_seconds": elapsed,
         "audit_iterations": len(state.get("iterations", [])),
+        "audit_min_iterations": min_iterations,
         "checks_passed": passed_checks,
         "git_pushed": git_pushed,
         "git": git,
