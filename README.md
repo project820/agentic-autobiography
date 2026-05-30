@@ -64,6 +64,15 @@ python3 scripts/agentic_autobiography.py journal --hours 24
 python3 scripts/agentic_autobiography.py serve
 ```
 
+For the required real-time audit loop:
+
+```bash
+python3 scripts/three_hour_audit_tick.py --duration-seconds 10800 --interval-seconds 600 --reset
+python3 scripts/finalize_audit_report.py
+```
+
+The finalizer returns success only after the audit state is `passed`, local verification checks pass, and `origin/main` matches the current `HEAD`. Add `--send-telegram` to send the final report through the existing Hermes Telegram settings.
+
 Example Codex prompt:
 
 ```text
