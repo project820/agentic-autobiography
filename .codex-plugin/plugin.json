@@ -1,0 +1,25 @@
+{
+  "name": "agentic-autobiography",
+  "version": "0.1.0",
+  "description": "ContextOS-style Codex memory plugin for local context recovery, daily journals, and an autobiography dashboard.",
+  "author": {
+    "name": "m5max"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Agentic Autobiography",
+    "shortDescription": "Recover local context and write source-grounded daily journals.",
+    "longDescription": "Agentic Autobiography is a local-first Codex plugin that indexes documents and recent file activity, recovers decisions and action items, writes daily journals, and renders a dashboard.",
+    "developerName": "m5max",
+    "category": "Productivity",
+    "capabilities": [
+      "Local document indexing",
+      "Context recovery",
+      "Action item extraction",
+      "Daily journal generation",
+      "Static dashboard rendering"
+    ],
+    "defaultPrompt": "Use Agentic Autobiography to recover local context, generate today's journal, and cite source files."
+  }
+}

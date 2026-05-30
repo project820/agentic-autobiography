@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agentic Autobiography</title>
+  <style>
+:root { color-scheme: dark; --bg:#08090b; --panel:#111318; --panel2:#171a21; --line:#2a2f3a; --text:#f4f7fb; --muted:#9aa4b2; --accent:#4f9cff; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: grid; grid-template-columns: 260px 1fr; background: var(--bg); color: var(--text); font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 0; }
+.sidebar { position: sticky; top: 0; height: 100vh; padding: 28px 18px; border-right: 1px solid var(--line); background: #0b0d11; }
+.brand { font-weight: 700; font-size: 17px; margin-bottom: 28px; }
+nav { display: grid; gap: 6px; margin-bottom: 28px; }
+nav a { color: var(--muted); text-decoration: none; padding: 8px 10px; border-radius: 8px; }
+nav a:hover { color: var(--text); background: var(--panel); }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 10px; background: var(--panel); }
+.stat strong { display: block; font-size: 22px; }
+.stat span, .muted { color: var(--muted); }
+main { padding: 34px; max-width: 1180px; width: 100%; }
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 28px; align-items: stretch; margin-bottom: 24px; }
+h1 { font-size: clamp(36px, 5vw, 72px); line-height: .95; margin: 0 0 20px; max-width: 760px; }
+h2 { margin: 0 0 18px; font-size: 20px; }
+h3 { margin: 0; font-size: 18px; }
+h4 { margin: 0 0 8px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.hero p { color: var(--muted); font-size: 16px; max-width: 760px; }
+.terminal, .panel, .journal-card { border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, var(--panel), #0d0f14); }
+.terminal { padding: 16px; overflow: hidden; }
+.terminal pre { white-space: pre-wrap; color: #dce7f7; margin: 18px 0 0; font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 10px; height: 10px; display: block; border-radius: 50%; background: var(--line); }
+.dots i:first-child { background: #ff5f57; }
+.dots i:nth-child(2) { background: #ffbd2e; }
+.dots i:nth-child(3) { background: #28c840; }
+.panel { padding: 18px; margin-bottom: 20px; }
+.journal-card { padding: 18px; margin-bottom: 14px; background: var(--panel2); }
+.journal-card header { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px; }
+.journal-card header span { color: var(--accent); }
+.journal-card p { color: #d7deea; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+ol, ul { margin: 0; padding-left: 18px; }
+li { margin: 6px 0; color: #d2dae7; }
+time { display: block; color: var(--accent); font-size: 12px; }
+.sources { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+@media (max-width: 860px) {
+  body { display: block; }
+  .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  main { padding: 22px; }
+  .hero, .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">Agentic Autobiography</div>
+    <nav>
+      <a href="#journal">Journal</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#sources">Sources</a>
+    </nav>
+    <div class="stat"><strong>7</strong><span>Indexed chunks</span></div>
+    <div class="stat"><strong>1</strong><span>Journals</span></div>
+  </aside>
+  <main>
+    <section class="hero">
+      <div>
+        <h1>Recover the context your AI forgot.</h1>
+        <p>Reviewed 7 source files: Woori SafeLink Feedback Notes - 2026-05-22, Woori SafeLink Meeting - 2026-05-20, Project Log - 2026-05-25, Architecture, Demo Script. Most concrete decision: The project started as a fraud detection idea, but the meeting reframed the strongest value as last-mile transaction blocking. Next visible action: Prepare three-minute demo.</p>
+      </div>
+      <div class="terminal">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <pre>$ python3 scripts/agentic_autobiography.py journal --hours 24
+generated: 2026-05-30T06:33:50.958100+00:00
+sources: 7
+dashboard: dashboard/index.html</pre>
+      </div>
+    </section>
+    <section id="journal" class="panel">
+      <h2>Daily Journals</h2>
+      
+<article class="journal-card" id="timeline">
+  <header>
+    <h3>2026-05-30</h3>
+    <span>24h window</span>
+  </header>
+  <p>Reviewed 7 source files: Woori SafeLink Feedback Notes - 2026-05-22, Woori SafeLink Meeting - 2026-05-20, Project Log - 2026-05-25, Architecture, Demo Script. Most concrete decision: The project started as a fraud detection idea, but the meeting reframed the strongest value as last-mile transaction blocking. Next visible action: Prepare three-minute demo.</p>
+  <div class="grid">
+    <div><h4>Timeline</h4><ol><li><time>2026-05-30</time>project_log.md</li><li><time>2026-05-30</time>feedback_notes.md</li><li><time>2026-05-30</time>meeting_0520.md</li><li><time>2026-05-30</time>SYSTEM_PROMPT.md</li><li><time>2026-05-30</time>DEMO_SCRIPT.md</li><li><time>2026-05-30</time>MCP_SPEC.md</li></ol></div>
+    <div><h4>Decisions</h4><ul><li>The project started as a fraud detection idea, but the meeting reframed the strongest value as last-mile transaction blocking.</li><li>Decision: focus the demo on stopping the final transfer moment rather than adding another detection dashboard.</li><li>Decision: present the product as transaction blocking software, not hardware-based fraud detection.</li><li>Your purpose is to recover forgotten context and preserve decision history.</li></ul></div>
+    <div><h4>Action Items</h4><ul><li>Prepare three-minute demo.</li><li>rewrite the architecture section around transaction blocking.</li><li>Update README.</li></ul></div>
+  </div>
+</article>
+
+    </section>
+    <section id="sources" class="panel">
+      <h2>Recent Sources</h2>
+      <ul class='sources'><li>/Users/m5max/Documents/agentic autobiography/docs/ARCHITECTURE.md</li><li>/Users/m5max/Documents/agentic autobiography/docs/DEMO_SCRIPT.md</li><li>/Users/m5max/Documents/agentic autobiography/docs/MCP_SPEC.md</li><li>/Users/m5max/Documents/agentic autobiography/docs/SYSTEM_PROMPT.md</li><li>/Users/m5max/Documents/agentic autobiography/samples/feedback_notes.md</li><li>/Users/m5max/Documents/agentic autobiography/samples/meeting_0520.md</li><li>/Users/m5max/Documents/agentic autobiography/samples/project_log.md</li></ul>
+    </section>
+  </main>
+</body>
+</html>

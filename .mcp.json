@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agentic-autobiography": {
+      "command": "python3",
+      "args": [
+        "scripts/contextos_mcp.py"
+      ]
+    }
+  }
+}
