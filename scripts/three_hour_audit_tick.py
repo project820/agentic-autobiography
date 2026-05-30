@@ -70,6 +70,20 @@ def run_command(command: list[str], iteration: int) -> dict:
 def run_tick(state: dict) -> dict:
     if state.get("status") != "running":
         return state
+    if state.get("iterations"):
+        last_finished = parse_time(state["iterations"][-1]["finished_at"])
+        elapsed_since_last = (utc_now() - last_finished).total_seconds()
+        total_elapsed = (utc_now() - parse_time(state["started_at"])).total_seconds()
+        interval_seconds = int(state.get("interval_seconds", 600))
+        duration_seconds = int(state.get("duration_seconds", 10800))
+        if elapsed_since_last < interval_seconds and total_elapsed < duration_seconds:
+            state["last_skip"] = {
+                "at": utc_now().isoformat(),
+                "reason": "interval_not_elapsed",
+                "seconds_since_last": int(elapsed_since_last),
+                "interval_seconds": interval_seconds,
+            }
+            return state
     commands = [
         ["python3", "-m", "unittest", "tests/test_agentic_autobiography.py"],
         ["python3", "scripts/agentic_autobiography.py", "index", "--docs", "docs", "samples"],
