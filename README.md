@@ -1,45 +1,44 @@
 # Agentic Autobiography
 
+한국어 README: [README.ko.md](README.ko.md)
+
 ## Recover the context your AI forgot.
 
-Agentic Autobiography is a local-first Codex plugin inspired by ContextOS. It indexes local notes, project logs, PRDs, and recent file activity, then helps Codex recover forgotten context and write a source-grounded daily journal.
+Agentic Autobiography is a local-first Codex plugin for hackathon demos. It scans source files and recent local activity, recovers forgotten project context, writes a source-grounded 24-hour journal, and renders a dashboard that Codex users can open during a demo.
 
-It is not a chatbot and not a life-tracking black box. It is a small memory layer for Codex:
-
-- Index local Markdown, TXT, JSON, CSV, and best-effort PDF text.
-- Search source-grounded context.
-- Extract decisions and action items.
-- Generate a 24-hour daily journal.
-- Scan configurable recent local file activity from the last 24 hours.
-- Render a dashboard for browsing journals and sources.
-- Expose MCP tools for Codex integration.
-
-## Install
+The Korean dashboard is ready for today's hackathon:
 
 ```bash
-git clone <repo-url>
-cd "agentic autobiography"
-python3 scripts/agentic_autobiography.py index
 python3 scripts/agentic_autobiography.py journal --hours 24
-python3 scripts/agentic_autobiography.py render-dashboard
-python3 scripts/agentic_autobiography.py serve --port 8766
+python3 scripts/agentic_autobiography.py render-dashboard --lang ko
+python3 scripts/agentic_autobiography.py serve --port 8765 --lang ko
 ```
 
-Then open:
+Open:
 
 ```text
-http://127.0.0.1:8766/dashboard/
+http://127.0.0.1:8765/dashboard/
 ```
+
+## What It Does
+
+- Indexes local Markdown, TXT, JSON, CSV, and best-effort PDF text.
+- Scans configurable recent local file activity from the last 24 hours.
+- Searches source-grounded context.
+- Extracts decisions, timelines, and action items.
+- Generates a daily journal with source paths.
+- Renders an English or Korean dashboard.
+- Exposes MCP tools for Codex plugin integration.
 
 ## Codex Plugin
 
-The plugin manifest lives at:
+Plugin manifest:
 
 ```text
 .codex-plugin/plugin.json
 ```
 
-The MCP server is configured in:
+MCP config:
 
 ```text
 .mcp.json
@@ -54,63 +53,29 @@ Available MCP tools:
 - `journal.generate`
 - `dashboard.render`
 
-## Typical Use
+## Demo Script
 
-```bash
-python3 scripts/agentic_autobiography.py index --docs docs samples
-python3 scripts/agentic_autobiography.py activity --hours 24
-python3 scripts/agentic_autobiography.py search "Woori SafeLink decisions"
-python3 scripts/agentic_autobiography.py journal --hours 24
-python3 scripts/agentic_autobiography.py serve
-```
+1. Generate the 24-hour journal.
+2. Render the Korean dashboard.
+3. Open `http://127.0.0.1:8765/dashboard/`.
+4. Show that the journal includes summary, timeline, decisions, action items, and source files.
+5. Explain the core idea:
 
-For the required real-time audit loop:
-
-```bash
-python3 scripts/three_hour_audit_tick.py --duration-seconds 10800 --interval-seconds 600 --reset
-python3 scripts/finalize_audit_report.py
-```
-
-The finalizer returns success only after the audit state is `passed`, local verification checks pass, and `origin/main` matches the current `HEAD`. Add `--send-telegram` to send the final report through the existing Hermes Telegram settings.
-
-Example Codex prompt:
-
-```text
-@context "What did we decide about the Woori SafeLink project?"
-```
-
-## Data
-
-Local generated data is stored under:
-
-```text
-data/index.json
-data/journals/*.json
-dashboard/index.html
-```
-
-The index stores excerpts and metadata, not embeddings. This keeps the MVP dependency-free and installable in minutes. The architecture leaves room for a vector database later.
+> AI should not only answer. It should recover why the answer matters.
 
 ## Privacy
 
-By default, document indexing uses the included `docs` and `samples` folders, while the `journal` command also scans configurable recent local file activity. It does not inspect Gmail, Slack, browser history, Calendar, or Messages unless a future connector is explicitly added and enabled.
+By default, the project indexes the included `docs` and `samples` folders. The journal command can also scan configured recent file activity roots from `config/activity_roots.json`.
 
-Recent activity roots are configured in:
+It does not inspect Gmail, Slack, browser history, Calendar, or Messages unless a future connector is explicitly added and enabled.
 
-```text
-config/activity_roots.json
-```
-
-The default roots are `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/.codex/sessions`, with common build/cache/private-heavy folders excluded. You can override this per run:
+## Verification
 
 ```bash
-python3 scripts/agentic_autobiography.py journal --hours 24 --activity-roots ~/Documents ~/Downloads
+python3 -m unittest tests/test_agentic_autobiography.py
+.venv/bin/python /Users/m5max/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
 ```
 
 ## Hackathon Track
 
 RALPHTHON Track 1 - Codex Plugin
-
-ContextOS positioning:
-
-> AI does not only need to answer. It needs to remember why the answer matters.
