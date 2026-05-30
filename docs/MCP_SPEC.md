@@ -65,7 +65,8 @@ Input:
 
 ```json
 {
-  "hours": 24
+  "hours": 24,
+  "activity_roots": ["~/Documents", "~/Downloads"]
 }
 ```
 

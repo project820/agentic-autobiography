@@ -1,0 +1,18 @@
+{
+  "roots": [
+    "~/Desktop",
+    "~/Documents",
+    "~/Downloads",
+    "~/.codex/sessions"
+  ],
+  "exclude_names": [
+    ".Trash",
+    ".git",
+    ".venv",
+    "Applications",
+    "Library",
+    "__pycache__",
+    "node_modules"
+  ],
+  "max_files": 150
+}

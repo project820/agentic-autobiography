@@ -10,6 +10,7 @@ It is not a chatbot and not a life-tracking black box. It is a small memory laye
 - Search source-grounded context.
 - Extract decisions and action items.
 - Generate a 24-hour daily journal.
+- Scan configurable recent local file activity from the last 24 hours.
 - Render a dashboard for browsing journals and sources.
 - Expose MCP tools for Codex integration.
 
@@ -57,6 +58,7 @@ Available MCP tools:
 
 ```bash
 python3 scripts/agentic_autobiography.py index --docs docs samples
+python3 scripts/agentic_autobiography.py activity --hours 24
 python3 scripts/agentic_autobiography.py search "Woori SafeLink decisions"
 python3 scripts/agentic_autobiography.py journal --hours 24
 python3 scripts/agentic_autobiography.py serve
@@ -82,7 +84,19 @@ The index stores excerpts and metadata, not embeddings. This keeps the MVP depen
 
 ## Privacy
 
-By default, this project scans only the folders you pass to `--docs` plus the included `docs` and `samples` folders. The `journal` command can include recent file activity from selected roots, but it does not inspect Gmail, Slack, browser history, Calendar, or Messages unless a future connector is explicitly added and enabled.
+By default, document indexing uses the included `docs` and `samples` folders, while the `journal` command also scans configurable recent local file activity. It does not inspect Gmail, Slack, browser history, Calendar, or Messages unless a future connector is explicitly added and enabled.
+
+Recent activity roots are configured in:
+
+```text
+config/activity_roots.json
+```
+
+The default roots are `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/.codex/sessions`, with common build/cache/private-heavy folders excluded. You can override this per run:
+
+```bash
+python3 scripts/agentic_autobiography.py journal --hours 24 --activity-roots ~/Documents ~/Downloads
+```
 
 ## Hackathon Track
 

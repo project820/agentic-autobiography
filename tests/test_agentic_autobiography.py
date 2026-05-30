@@ -19,16 +19,19 @@ class AgenticAutobiographyTests(unittest.TestCase):
         self.old_journal_dir = engine.JOURNAL_DIR
         self.old_index_path = engine.INDEX_PATH
         self.old_dashboard_path = engine.DASHBOARD_PATH
+        self.old_activity_config_path = engine.ACTIVITY_CONFIG_PATH
         engine.DATA_DIR = self.temp_root / "data"
         engine.JOURNAL_DIR = engine.DATA_DIR / "journals"
         engine.INDEX_PATH = engine.DATA_DIR / "index.json"
         engine.DASHBOARD_PATH = self.temp_root / "dashboard" / "index.html"
+        engine.ACTIVITY_CONFIG_PATH = self.temp_root / "config" / "activity_roots.json"
 
     def tearDown(self):
         engine.DATA_DIR = self.old_data_dir
         engine.JOURNAL_DIR = self.old_journal_dir
         engine.INDEX_PATH = self.old_index_path
         engine.DASHBOARD_PATH = self.old_dashboard_path
+        engine.ACTIVITY_CONFIG_PATH = self.old_activity_config_path
         self.workspace.cleanup()
 
     def test_index_search_and_summary_are_source_grounded(self):
@@ -57,12 +60,24 @@ class AgenticAutobiographyTests(unittest.TestCase):
                 "# Daily Work\n\nDecision: keep the memory layer dependency-free.\n\nAction: render dashboard.",
                 encoding="utf-8",
             )
-            journal = engine.generate_journal(hours=24, docs=[Path(tmp)])
+            journal = engine.generate_journal(hours=24, docs=[Path(tmp)], activity_roots=[Path(tmp)])
 
         self.assertIn("summary", journal)
+        self.assertEqual(journal["recent_file_count"], 1)
         self.assertTrue(engine.DASHBOARD_PATH.exists())
         html = engine.DASHBOARD_PATH.read_text(encoding="utf-8")
         self.assertIn("Agentic Autobiography", html)
+
+    def test_recent_activity_scans_modified_files(self):
+        root = self.temp_root / "activity"
+        root.mkdir()
+        (root / "recent.md").write_text("# Recent\n\nAction: inspect the day.", encoding="utf-8")
+        (root / ".hidden.md").write_text("hidden", encoding="utf-8")
+
+        activity = engine.recent_file_activity([root], hours=24)
+
+        self.assertEqual(len(activity), 1)
+        self.assertTrue(activity[0]["path"].endswith("recent.md"))
 
     def test_mcp_server_lists_tools(self):
         import contextos_mcp

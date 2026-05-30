@@ -73,7 +73,19 @@ def run_tick(state: dict) -> dict:
     commands = [
         ["python3", "-m", "unittest", "tests/test_agentic_autobiography.py"],
         ["python3", "scripts/agentic_autobiography.py", "index", "--docs", "docs", "samples"],
-        ["python3", "scripts/agentic_autobiography.py", "journal", "--hours", "24", "--docs", "docs", "samples"],
+        [
+            "python3",
+            "scripts/agentic_autobiography.py",
+            "journal",
+            "--hours",
+            "24",
+            "--docs",
+            "docs",
+            "samples",
+            "--activity-roots",
+            "docs",
+            "samples",
+        ],
         ["python3", "scripts/agentic_autobiography.py", "render-dashboard"],
     ]
     iteration = len(state["iterations"]) + 1

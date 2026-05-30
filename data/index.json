@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T06:39:57.243090+00:00",
+  "generated_at": "2026-05-30T06:45:12.188310+00:00",
   "root": "/Users/m5max/Documents/agentic autobiography",
   "files_indexed": 7,
   "chunks": [
@@ -65,8 +65,8 @@
       "id": "/Users/m5max/Documents/agentic autobiography/docs/MCP_SPEC.md#0",
       "source": "/Users/m5max/Documents/agentic autobiography/docs/MCP_SPEC.md",
       "title": "MCP Specification",
-      "modified_at": "2026-05-30T06:30:06.305509+00:00",
-      "excerpt": "# MCP Specification ## Server `agentic-autobiography` ## Tools ### memory.search Search indexed local context. Input: ```json { \"query\": \"string\", \"limit\": 5 } ``` ### memory.timeline Build a source-grounded timeline for an entity or project. Input: ```json { \"entity\": \"string\", \"limit\": 10 } ``` ### memory.actions Extract unfinished work and follow-up items. Input: ```json { \"scope\": \"string\", \"limit\": 10 } ``` ### memory.summary Generate a recovered context report. Input: ```json { \"query\": \"string\" } ``` ### journal.generate Write a daily journal from the last N hours of indexed context and recent files. Input: ```json { \"hours\": 24 } ``` ### dashboard.render Render the static dashboard. Input: ```json {} ```",
+      "modified_at": "2026-05-30T06:44:47.443466+00:00",
+      "excerpt": "# MCP Specification ## Server `agentic-autobiography` ## Tools ### memory.search Search indexed local context. Input: ```json { \"query\": \"string\", \"limit\": 5 } ``` ### memory.timeline Build a source-grounded timeline for an entity or project. Input: ```json { \"entity\": \"string\", \"limit\": 10 } ``` ### memory.actions Extract unfinished work and follow-up items. Input: ```json { \"scope\": \"string\", \"limit\": 10 } ``` ### memory.summary Generate a recovered context report. Input: ```json { \"query\": \"string\" } ``` ### journal.generate Write a daily journal from the last N hours of indexed context and recent files. Input: ```json { \"hours\": 24, \"activity_roots\": [\"~/Documents\", \"~/Downloads\"] } ``` ### dashboard.render Render the static dashboard. Input: ```json {} ```",
       "keywords": [
         "input",
         "json",

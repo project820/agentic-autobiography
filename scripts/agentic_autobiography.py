@@ -23,9 +23,19 @@ DATA_DIR = ROOT / "data"
 JOURNAL_DIR = DATA_DIR / "journals"
 INDEX_PATH = DATA_DIR / "index.json"
 DASHBOARD_PATH = ROOT / "dashboard" / "index.html"
+ACTIVITY_CONFIG_PATH = ROOT / "config" / "activity_roots.json"
 DEFAULT_DOCS = [ROOT / "docs", ROOT / "samples"]
 TEXT_EXTENSIONS = {".md", ".markdown", ".txt", ".json", ".csv", ".log"}
 PDF_EXTENSIONS = {".pdf"}
+DEFAULT_EXCLUDES = {
+    ".git",
+    ".venv",
+    "__pycache__",
+    "node_modules",
+    "Library",
+    ".Trash",
+    "Applications",
+}
 ACTION_RE = re.compile(r"\b(action|todo|next|follow[- ]?up|해야|준비|작성|수정|추가)\b", re.I)
 DECISION_RE = re.compile(r"\b(decision|decided|결정|확정|reframed|shifted|focus)\b", re.I)
 WORD_RE = re.compile(r"[A-Za-z0-9가-힣_]{2,}")
@@ -112,7 +122,109 @@ def iter_files(roots: Iterable[Path]) -> Iterable[Path]:
                 yield path
 
 
+def default_activity_config() -> dict[str, Any]:
+    home = Path.home()
+    return {
+        "roots": [
+            str(home / "Desktop"),
+            str(home / "Documents"),
+            str(home / "Downloads"),
+            str(home / ".codex" / "sessions"),
+        ],
+        "exclude_names": sorted(DEFAULT_EXCLUDES),
+        "max_files": 150,
+    }
+
+
+def load_activity_config() -> dict[str, Any]:
+    if not ACTIVITY_CONFIG_PATH.exists():
+        return default_activity_config()
+    try:
+        payload = json.loads(ACTIVITY_CONFIG_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return default_activity_config()
+    default = default_activity_config()
+    return {
+        "roots": payload.get("roots") or default["roots"],
+        "exclude_names": payload.get("exclude_names") or default["exclude_names"],
+        "max_files": int(payload.get("max_files") or default["max_files"]),
+    }
+
+
+def iter_recent_paths(
+    roots: Iterable[Path],
+    hours: int,
+    *,
+    exclude_names: set[str] | None = None,
+    max_files: int = 150,
+) -> list[Path]:
+    cutoff = now_utc() - dt.timedelta(hours=hours)
+    exclude_names = exclude_names or DEFAULT_EXCLUDES
+    matches: list[tuple[float, Path]] = []
+    for raw_root in roots:
+        root = raw_root.expanduser().resolve()
+        if not root.exists():
+            continue
+        if root.is_file():
+            try:
+                if dt.datetime.fromtimestamp(root.stat().st_mtime, dt.timezone.utc) >= cutoff:
+                    matches.append((root.stat().st_mtime, root))
+            except OSError:
+                continue
+            continue
+        for current, dirs, files in os.walk(root):
+            dirs[:] = [name for name in dirs if name not in exclude_names and not name.startswith(".")]
+            current_path = Path(current)
+            for name in files:
+                if name.startswith("."):
+                    continue
+                path = current_path / name
+                try:
+                    stat = path.stat()
+                except OSError:
+                    continue
+                modified = dt.datetime.fromtimestamp(stat.st_mtime, dt.timezone.utc)
+                if modified >= cutoff:
+                    matches.append((stat.st_mtime, path))
+    matches.sort(key=lambda item: item[0], reverse=True)
+    return [path for _, path in matches[:max_files]]
+
+
+def recent_activity_chunks(paths: Iterable[Path]) -> list[dict[str, Any]]:
+    chunks: list[dict[str, Any]] = []
+    for path in paths:
+        if is_generated_artifact(path):
+            continue
+        if path.suffix.lower() not in TEXT_EXTENSIONS:
+            continue
+        try:
+            if path.stat().st_size > 1_000_000:
+                continue
+            text = read_text(path)
+        except OSError:
+            continue
+        for chunk in chunk_text(path, text, chunk_size=900)[:2]:
+            chunks.append(chunk.as_dict())
+    return chunks
+
+
+def is_generated_artifact(path: Path) -> bool:
+    try:
+        resolved = path.resolve()
+        relative = resolved.relative_to(ROOT)
+    except (OSError, ValueError):
+        return False
+    parts = relative.parts
+    return (
+        parts[:1] == ("dashboard",)
+        or parts[:1] == ("data",)
+        or parts[:1] == (".git",)
+    )
+
+
 def title_for(path: Path, text: str) -> str:
+    if path.suffix.lower() in {".json", ".csv", ".log"}:
+        return path.name
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("#"):
@@ -332,33 +444,50 @@ def summarize(query: str, limit: int = 7) -> dict[str, Any]:
     }
 
 
-def recent_file_activity(roots: Iterable[Path], hours: int) -> list[dict[str, str]]:
-    cutoff = now_utc() - dt.timedelta(hours=hours)
+def recent_file_activity(
+    roots: Iterable[Path],
+    hours: int,
+    *,
+    exclude_names: set[str] | None = None,
+    max_files: int = 150,
+) -> list[dict[str, str]]:
     items: list[dict[str, str]] = []
-    for path in iter_files(roots):
+    for path in iter_recent_paths(roots, hours, exclude_names=exclude_names, max_files=max_files):
+        if is_generated_artifact(path):
+            continue
         modified = dt.datetime.fromtimestamp(path.stat().st_mtime, dt.timezone.utc)
-        if modified >= cutoff:
-            items.append(
-                {
-                    "path": str(path.resolve()),
-                    "modified_at": modified.isoformat(),
-                    "title": path.name,
-                }
-            )
+        items.append(
+            {
+                "path": str(path.resolve()),
+                "modified_at": modified.isoformat(),
+                "title": path.name,
+            }
+        )
     items.sort(key=lambda item: item["modified_at"], reverse=True)
     return items
 
 
-def generate_journal(hours: int = 24, docs: Iterable[Path] | None = None) -> dict[str, Any]:
+def generate_journal(
+    hours: int = 24,
+    docs: Iterable[Path] | None = None,
+    activity_roots: Iterable[Path] | None = None,
+) -> dict[str, Any]:
     ensure_dirs()
     docs = list(docs or DEFAULT_DOCS)
+    activity_config = load_activity_config()
+    if activity_roots is None:
+        activity_roots = [Path(value) for value in activity_config["roots"]]
+    activity_roots = list(activity_roots)
+    exclude_names = set(activity_config.get("exclude_names", [])) or DEFAULT_EXCLUDES
+    max_files = int(activity_config.get("max_files", 150))
     index = build_index(docs)
-    recent = recent_file_activity(docs, hours)
+    recent = recent_file_activity(activity_roots, hours, exclude_names=exclude_names, max_files=max_files)
     chunks = index.get("chunks", [])
+    activity_chunks = recent_activity_chunks(Path(item["path"]) for item in recent)
     cutoff = now_utc() - dt.timedelta(hours=hours)
     recent_chunks = [
         chunk
-        for chunk in chunks
+        for chunk in [*activity_chunks, *chunks]
         if dt.datetime.fromisoformat(chunk["modified_at"]) >= cutoff
     ]
     if not recent_chunks:
@@ -399,6 +528,8 @@ def generate_journal(hours: int = 24, docs: Iterable[Path] | None = None) -> dic
         "actions": actions,
         "sources": sources,
         "source_count": len(sources),
+        "activity_roots": [str(path.expanduser()) for path in activity_roots],
+        "recent_file_count": len(recent),
     }
     out_path = JOURNAL_DIR / f"{payload['date']}.json"
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -426,6 +557,7 @@ def render_dashboard() -> Path:
     latest = journals[0] if journals else None
     latest_summary = latest.get("summary", "No journal has been generated yet.") if latest else "No journal has been generated yet."
     source_count = latest.get("source_count", 0) if latest else 0
+    recent_file_count = latest.get("recent_file_count", 0) if latest else 0
     journal_cards = "\n".join(render_journal_card(journal) for journal in journals) or "<p class='muted'>No journals yet. Run the journal command.</p>"
     html_payload = f"""<!doctype html>
 <html lang="en">
@@ -457,6 +589,7 @@ def render_dashboard() -> Path:
         <pre>$ python3 scripts/agentic_autobiography.py journal --hours 24
 generated: {html.escape(latest.get("generated_at", "not yet") if latest else "not yet")}
 sources: {source_count}
+recent files: {recent_file_count}
 dashboard: dashboard/index.html</pre>
       </div>
     </section>
@@ -574,6 +707,14 @@ def parse_paths(values: list[str] | None) -> list[Path]:
     return [Path(value) for value in values]
 
 
+def parse_optional_paths(values: list[str] | None) -> list[Path] | None:
+    if values is None:
+        return None
+    if not values:
+        return []
+    return [Path(value) for value in values]
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Agentic Autobiography local memory engine")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -596,9 +737,15 @@ def build_parser() -> argparse.ArgumentParser:
     actions_cmd.add_argument("scope", nargs="?", default="")
     actions_cmd.add_argument("--limit", type=int, default=10)
 
+    activity_cmd = sub.add_parser("activity", help="List recent local file activity")
+    activity_cmd.add_argument("--hours", type=int, default=24)
+    activity_cmd.add_argument("--activity-roots", nargs="*", help="Activity roots to scan")
+    activity_cmd.add_argument("--limit", type=int, default=50)
+
     journal_cmd = sub.add_parser("journal", help="Generate a daily journal")
     journal_cmd.add_argument("--hours", type=int, default=24)
     journal_cmd.add_argument("--docs", nargs="*", help="Document roots to scan")
+    journal_cmd.add_argument("--activity-roots", nargs="*", help="Recent-activity roots to scan")
 
     sub.add_parser("render-dashboard", help="Render dashboard/index.html")
 
@@ -621,8 +768,27 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "actions":
         matches = search(args.scope or "action todo next follow-up", limit=20)
         print_json(extract_actions(matches, limit=args.limit))
+    elif args.command == "activity":
+        config = load_activity_config()
+        roots = parse_optional_paths(args.activity_roots)
+        if roots is None:
+            roots = [Path(value) for value in config["roots"]]
+        print_json(
+            recent_file_activity(
+                roots,
+                args.hours,
+                exclude_names=set(config.get("exclude_names", [])) or DEFAULT_EXCLUDES,
+                max_files=args.limit,
+            )
+        )
     elif args.command == "journal":
-        print_json(generate_journal(hours=args.hours, docs=parse_paths(args.docs)))
+        print_json(
+            generate_journal(
+                hours=args.hours,
+                docs=parse_paths(args.docs),
+                activity_roots=parse_optional_paths(args.activity_roots),
+            )
+        )
     elif args.command == "render-dashboard":
         print_json({"dashboard": str(render_dashboard())})
     elif args.command == "serve":

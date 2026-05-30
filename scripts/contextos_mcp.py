@@ -67,7 +67,14 @@ def tool_descriptions() -> list[JSON]:
             "description": "Write a daily journal from the last N hours of local context.",
             "inputSchema": {
                 "type": "object",
-                "properties": {"hours": {"type": "integer", "default": 24}},
+                "properties": {
+                    "hours": {"type": "integer", "default": 24},
+                    "activity_roots": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional local roots to scan for recent file activity.",
+                    },
+                },
             },
         },
         {
@@ -98,7 +105,12 @@ def call_tool(name: str, arguments: JSON) -> JSON:
             int(args.get("limit", 10)),
         ),
         "memory.summary": lambda args: engine.summarize(args["query"]),
-        "journal.generate": lambda args: engine.generate_journal(int(args.get("hours", 24))),
+        "journal.generate": lambda args: engine.generate_journal(
+            int(args.get("hours", 24)),
+            activity_roots=[engine.Path(value) for value in args.get("activity_roots", [])]
+            if args.get("activity_roots") is not None
+            else None,
+        ),
         "dashboard.render": lambda args: {"dashboard": str(engine.render_dashboard())},
     }
     if name not in handlers:
