@@ -68,6 +68,15 @@ class AgenticAutobiographyTests(unittest.TestCase):
         html = engine.DASHBOARD_PATH.read_text(encoding="utf-8")
         self.assertIn("Agentic Autobiography", html)
 
+    def test_dashboard_can_render_korean_ui(self):
+        engine.render_dashboard(lang="ko")
+
+        html = engine.DASHBOARD_PATH.read_text(encoding="utf-8")
+        self.assertIn('<html lang="ko">', html)
+        self.assertIn("오늘의 저널", html)
+        self.assertIn("최근 출처", html)
+        self.assertIn("인덱싱된 조각", html)
+
     def test_recent_activity_scans_modified_files(self):
         root = self.temp_root / "activity"
         root.mkdir()

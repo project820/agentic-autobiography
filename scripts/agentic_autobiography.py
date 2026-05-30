@@ -550,17 +550,80 @@ def load_journals() -> list[dict[str, Any]]:
     return journals
 
 
-def render_dashboard() -> Path:
+LABELS = {
+    "en": {
+        "html_lang": "en",
+        "brand": "Agentic Autobiography",
+        "nav_journal": "Journal",
+        "nav_timeline": "Timeline",
+        "nav_sources": "Sources",
+        "indexed_chunks": "Indexed chunks",
+        "journals": "Journals",
+        "hero_title": "Recover the context your AI forgot.",
+        "empty_summary": "No journal has been generated yet.",
+        "command_journal": "journal",
+        "generated": "generated",
+        "sources": "sources",
+        "recent_files": "recent files",
+        "dashboard": "dashboard",
+        "daily_journals": "Daily Journals",
+        "recent_sources": "Recent Sources",
+        "empty_journals": "No journals yet. Run the journal command.",
+        "untitled": "Untitled",
+        "hour_window": "h window",
+        "timeline": "Timeline",
+        "decisions": "Decisions",
+        "action_items": "Action Items",
+        "no_decisions": "No explicit decisions found.",
+        "no_actions": "No action items found.",
+        "no_sources": "No sources yet.",
+    },
+    "ko": {
+        "html_lang": "ko",
+        "brand": "Agentic Autobiography",
+        "nav_journal": "저널",
+        "nav_timeline": "타임라인",
+        "nav_sources": "출처",
+        "indexed_chunks": "인덱싱된 조각",
+        "journals": "저널",
+        "hero_title": "AI가 놓친 맥락을 다시 복구합니다.",
+        "empty_summary": "아직 생성된 저널이 없습니다.",
+        "command_journal": "저널 생성",
+        "generated": "생성 시각",
+        "sources": "출처",
+        "recent_files": "최근 파일",
+        "dashboard": "대시보드",
+        "daily_journals": "오늘의 저널",
+        "recent_sources": "최근 출처",
+        "empty_journals": "아직 저널이 없습니다. journal 명령을 실행하세요.",
+        "untitled": "제목 없음",
+        "hour_window": "시간 범위",
+        "timeline": "타임라인",
+        "decisions": "결정 사항",
+        "action_items": "할 일",
+        "no_decisions": "명시적인 결정 사항이 없습니다.",
+        "no_actions": "할 일이 없습니다.",
+        "no_sources": "아직 출처가 없습니다.",
+    },
+}
+
+
+def dashboard_labels(lang: str) -> dict[str, str]:
+    return LABELS.get(lang, LABELS["en"])
+
+
+def render_dashboard(lang: str = "en") -> Path:
     ensure_dirs()
+    labels = dashboard_labels(lang)
     journals = load_journals()
     index = load_index()
     latest = journals[0] if journals else None
-    latest_summary = latest.get("summary", "No journal has been generated yet.") if latest else "No journal has been generated yet."
+    latest_summary = latest.get("summary", labels["empty_summary"]) if latest else labels["empty_summary"]
     source_count = latest.get("source_count", 0) if latest else 0
     recent_file_count = latest.get("recent_file_count", 0) if latest else 0
-    journal_cards = "\n".join(render_journal_card(journal) for journal in journals) or "<p class='muted'>No journals yet. Run the journal command.</p>"
+    journal_cards = "\n".join(render_journal_card(journal, labels) for journal in journals) or f"<p class='muted'>{labels['empty_journals']}</p>"
     html_payload = f"""<!doctype html>
-<html lang="en">
+<html lang="{labels['html_lang']}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -569,37 +632,37 @@ def render_dashboard() -> Path:
 </head>
 <body>
   <aside class="sidebar">
-    <div class="brand">Agentic Autobiography</div>
+    <div class="brand">{labels['brand']}</div>
     <nav>
-      <a href="#journal">Journal</a>
-      <a href="#timeline">Timeline</a>
-      <a href="#sources">Sources</a>
+      <a href="#journal">{labels['nav_journal']}</a>
+      <a href="#timeline">{labels['nav_timeline']}</a>
+      <a href="#sources">{labels['nav_sources']}</a>
     </nav>
-    <div class="stat"><strong>{len(index.get("chunks", []))}</strong><span>Indexed chunks</span></div>
-    <div class="stat"><strong>{len(journals)}</strong><span>Journals</span></div>
+    <div class="stat"><strong>{len(index.get("chunks", []))}</strong><span>{labels['indexed_chunks']}</span></div>
+    <div class="stat"><strong>{len(journals)}</strong><span>{labels['journals']}</span></div>
   </aside>
   <main>
     <section class="hero">
       <div>
-        <h1>Recover the context your AI forgot.</h1>
+        <h1>{labels['hero_title']}</h1>
         <p>{html.escape(latest_summary)}</p>
       </div>
       <div class="terminal">
         <div class="dots"><i></i><i></i><i></i></div>
         <pre>$ python3 scripts/agentic_autobiography.py journal --hours 24
-generated: {html.escape(latest.get("generated_at", "not yet") if latest else "not yet")}
-sources: {source_count}
-recent files: {recent_file_count}
-dashboard: dashboard/index.html</pre>
+{labels['generated']}: {html.escape(latest.get("generated_at", "not yet") if latest else "not yet")}
+{labels['sources']}: {source_count}
+{labels['recent_files']}: {recent_file_count}
+{labels['dashboard']}: dashboard/index.html</pre>
       </div>
     </section>
     <section id="journal" class="panel">
-      <h2>Daily Journals</h2>
+      <h2>{labels['daily_journals']}</h2>
       {journal_cards}
     </section>
     <section id="sources" class="panel">
-      <h2>Recent Sources</h2>
-      {render_source_list(latest)}
+      <h2>{labels['recent_sources']}</h2>
+      {render_source_list(latest, labels)}
     </section>
   </main>
 </body>
@@ -609,7 +672,8 @@ dashboard: dashboard/index.html</pre>
     return DASHBOARD_PATH
 
 
-def render_journal_card(journal: dict[str, Any]) -> str:
+def render_journal_card(journal: dict[str, Any], labels: dict[str, str] | None = None) -> str:
+    labels = labels or LABELS["en"]
     decisions = "".join(f"<li>{html.escape(item.get('decision', ''))}</li>" for item in journal.get("decisions", [])[:5])
     actions = "".join(f"<li>{html.escape(item.get('task', ''))}</li>" for item in journal.get("actions", [])[:5])
     timeline = "".join(
@@ -619,22 +683,23 @@ def render_journal_card(journal: dict[str, Any]) -> str:
     return f"""
 <article class="journal-card" id="timeline">
   <header>
-    <h3>{html.escape(journal.get('date', 'Untitled'))}</h3>
-    <span>{html.escape(str(journal.get('hours', 24)))}h window</span>
+    <h3>{html.escape(journal.get('date', labels['untitled']))}</h3>
+    <span>{html.escape(str(journal.get('hours', 24)))}{labels['hour_window']}</span>
   </header>
   <p>{html.escape(journal.get('summary', ''))}</p>
   <div class="grid">
-    <div><h4>Timeline</h4><ol>{timeline}</ol></div>
-    <div><h4>Decisions</h4><ul>{decisions or '<li>No explicit decisions found.</li>'}</ul></div>
-    <div><h4>Action Items</h4><ul>{actions or '<li>No action items found.</li>'}</ul></div>
+    <div><h4>{labels['timeline']}</h4><ol>{timeline}</ol></div>
+    <div><h4>{labels['decisions']}</h4><ul>{decisions or f"<li>{labels['no_decisions']}</li>"}</ul></div>
+    <div><h4>{labels['action_items']}</h4><ul>{actions or f"<li>{labels['no_actions']}</li>"}</ul></div>
   </div>
 </article>
 """
 
 
-def render_source_list(journal: dict[str, Any] | None) -> str:
+def render_source_list(journal: dict[str, Any] | None, labels: dict[str, str] | None = None) -> str:
+    labels = labels or LABELS["en"]
     if not journal:
-        return "<p class='muted'>No sources yet.</p>"
+        return f"<p class='muted'>{labels['no_sources']}</p>"
     items = "".join(f"<li>{html.escape(source)}</li>" for source in journal.get("sources", [])[:20])
     return f"<ul class='sources'>{items}</ul>"
 
@@ -686,8 +751,8 @@ time { display: block; color: var(--accent); font-size: 12px; }
 """
 
 
-def serve(port: int) -> None:
-    render_dashboard()
+def serve(port: int, lang: str = "en") -> None:
+    render_dashboard(lang)
     os.chdir(ROOT)
     server = ThreadingHTTPServer(("127.0.0.1", port), SimpleHTTPRequestHandler)
     print(f"Serving dashboard at http://127.0.0.1:{port}/dashboard/")
@@ -747,10 +812,12 @@ def build_parser() -> argparse.ArgumentParser:
     journal_cmd.add_argument("--docs", nargs="*", help="Document roots to scan")
     journal_cmd.add_argument("--activity-roots", nargs="*", help="Recent-activity roots to scan")
 
-    sub.add_parser("render-dashboard", help="Render dashboard/index.html")
+    dashboard_cmd = sub.add_parser("render-dashboard", help="Render dashboard/index.html")
+    dashboard_cmd.add_argument("--lang", choices=sorted(LABELS), default="en")
 
     serve_cmd = sub.add_parser("serve", help="Serve the dashboard")
     serve_cmd.add_argument("--port", type=int, default=8766)
+    serve_cmd.add_argument("--lang", choices=sorted(LABELS), default="en")
 
     return parser
 
@@ -790,9 +857,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
     elif args.command == "render-dashboard":
-        print_json({"dashboard": str(render_dashboard())})
+        print_json({"dashboard": str(render_dashboard(args.lang)), "lang": args.lang})
     elif args.command == "serve":
-        serve(args.port)
+        serve(args.port, args.lang)
     return 0
 
 
