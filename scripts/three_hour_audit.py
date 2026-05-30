@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -13,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "data" / "three_hour_audit_state.json"
+AUDIT_OUTPUT_DIR = ROOT / "data" / "audit-runtime"
 
 
 def utc_now() -> str:
@@ -22,6 +24,13 @@ def utc_now() -> str:
 def write_state(payload: dict) -> None:
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def audit_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["AGENTIC_AUTOBIOGRAPHY_DATA_DIR"] = str(AUDIT_OUTPUT_DIR / "data")
+    env["AGENTIC_AUTOBIOGRAPHY_DASHBOARD_PATH"] = str(AUDIT_OUTPUT_DIR / "dashboard" / "index.html")
+    return env
 
 
 def run_once(iteration: int) -> list[dict]:
@@ -46,7 +55,7 @@ def run_once(iteration: int) -> list[dict]:
     results = []
     for command in commands:
         started_at = utc_now()
-        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, env=audit_env())
         output = (result.stdout + result.stderr).strip()
         entry = {
             "iteration": iteration,

@@ -5,3 +5,4 @@ __pycache__/
 data/three_hour_audit.log
 data/three_hour_audit.pid
 data/three_hour_audit_state.json
+data/audit-runtime/

@@ -6,12 +6,14 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import subprocess
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "data" / "three_hour_audit_state.json"
+AUDIT_OUTPUT_DIR = ROOT / "data" / "audit-runtime"
 
 
 def utc_now() -> dt.datetime:
@@ -55,7 +57,10 @@ def load_state(duration_seconds: int, interval_seconds: int, reset: bool) -> dic
 
 def run_command(command: list[str], iteration: int) -> dict:
     started_at = utc_now()
-    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+    env = os.environ.copy()
+    env["AGENTIC_AUTOBIOGRAPHY_DATA_DIR"] = str(AUDIT_OUTPUT_DIR / "data")
+    env["AGENTIC_AUTOBIOGRAPHY_DASHBOARD_PATH"] = str(AUDIT_OUTPUT_DIR / "dashboard" / "index.html")
+    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, env=env)
     output = (result.stdout + result.stderr).strip()
     return {
         "iteration": iteration,

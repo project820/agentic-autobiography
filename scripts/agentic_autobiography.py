@@ -19,10 +19,10 @@ from typing import Any, Iterable
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
+DATA_DIR = Path(os.environ.get("AGENTIC_AUTOBIOGRAPHY_DATA_DIR", ROOT / "data"))
 JOURNAL_DIR = DATA_DIR / "journals"
 INDEX_PATH = DATA_DIR / "index.json"
-DASHBOARD_PATH = ROOT / "dashboard" / "index.html"
+DASHBOARD_PATH = Path(os.environ.get("AGENTIC_AUTOBIOGRAPHY_DASHBOARD_PATH", ROOT / "dashboard" / "index.html"))
 ACTIVITY_CONFIG_PATH = ROOT / "config" / "activity_roots.json"
 DEFAULT_DOCS = [ROOT / "docs", ROOT / "samples"]
 TEXT_EXTENSIONS = {".md", ".markdown", ".txt", ".json", ".csv", ".log"}
